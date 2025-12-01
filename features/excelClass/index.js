@@ -107,21 +107,21 @@ export class excelHandler {
               
             ){
               const body = {
-              item: row[0],
-              nombre_base_de_datos: row[1],
-              descripcion_del_dato: row[2],
-              propietario_origen: row[3],
-              direccion_responsable: row[4],
-              contacto_responsable: row[5],
-              frecuencia_actualizacion: row[6],
-              data_publica_privada: row[7],
-              nivel_calidad_data: row[8],
-              fuente_ie: row[9],
-              actualizado_fecha: row[10],
-              enlace_link: row[11],
-              formato_origen: row[12],
-              formato_publicacion: row[13],
-              tipo_datos: row[14],
+              item: row[0].trim(),
+              nombre_base_de_datos: row[1].trim(),
+              descripcion_del_dato: row[2].trim(),
+              propietario_origen: row[3].trim(),
+              direccion_responsable: row[4].trim(),
+              contacto_responsable: row[5].trim(),
+              frecuencia_actualizacion: row[6].trim(),
+              data_publica_privada: row[7].trim(),
+              nivel_calidad_data: row[8].trim(),
+              fuente_ie: row[9].trim(),
+              actualizado_fecha: row[10].trim(),
+              enlace_link: row[11].trim(),
+              formato_origen: row[12].trim(),
+              formato_publicacion: row[13].trim(),
+              tipo_datos: row[14].trim(),
             };
 
             dataFromOneFile.push(body)
@@ -150,8 +150,17 @@ export class excelHandler {
     }
   }
 
-  async transformData() {
+  async transformData(data) {
     //En este metodo vamos a transformar la data de tal modo que no hayan duplicados ni cosas raras
+    //  const i =7
+    // console.log(data[i].dataExtracted[data[i].dataExtracted.length-1])
+    console.log(data)
+    //Se debe recorrer cada archivo y solo extraer los datos una vez... Se debe comparar cada registro
+    for (const dato of data) {
+       console.log(data)
+    }
+
+
   }
   async getRows() {
     //Verificamos si tiene archivos:
@@ -161,8 +170,8 @@ export class excelHandler {
 
     //Si tiene archivos entonces vamos a proceder a extraer su composicion para devolverla:
     const dataReaded = await this.readFilesXLSX();
-    const i =7
-    console.log(dataReaded[i].dataExtracted[dataReaded[i].dataExtracted.length-1])
+    this.transformData(dataReaded)
+   
     //La data extraida es necesaria que sea limpiada y que no hayan duplicidades y solo tengamos un solo body con todo
   
 
