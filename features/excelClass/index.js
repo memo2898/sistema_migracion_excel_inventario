@@ -150,31 +150,65 @@ export class excelHandler {
     }
   }
 
-  async transformData(data) {
-    //En este metodo vamos a transformar la data de tal modo que no hayan duplicados ni cosas raras
-    //  const i =7
-    // console.log(data[i].dataExtracted[data[i].dataExtracted.length-1])
-    console.log(data)
-    //Se debe recorrer cada archivo y solo extraer los datos una vez... Se debe comparar cada registro
-    for (const dato of data) {
-       console.log(data)
-    }
-
-
-  }
-  async getRows() {
-    //Verificamos si tiene archivos:
-    const haveFiles = await this.haveFiles(INPUT_DIR);
-
-    if (!haveFiles) return false;
-
-    //Si tiene archivos entonces vamos a proceder a extraer su composicion para devolverla:
-    const dataReaded = await this.readFilesXLSX();
-    this.transformData(dataReaded)
-   
-    //La data extraida es necesaria que sea limpiada y que no hayan duplicidades y solo tengamos un solo body con todo
+ async transformData(data) {
+  // Arreglo consolidado sin duplicados
+  const consolidatedData = [];
   
-
-    return haveFiles;
+  // Set para rastrear combinaciones únicas de nombre_base_de_datos + descripcion_del_dato
+  const uniqueEntries = new Set();
+  
+  // Recorrer cada archivo
+  for (const fileData of data) {
+    const { fileName, dataExtracted } = fileData;
+    
+    console.log(`\nProcesando archivo: ${fileName}`);
+    console.log(`Registros encontrados: ${dataExtracted.length}`);
+    
+    // Recorrer cada registro extraído del archivo
+    for (const record of dataExtracted) {
+      const nombreBase = record.nombre_base_de_datos?.trim().toLowerCase() || '';
+      const descripcion = record.descripcion_del_dato?.trim().toLowerCase() || '';
+      
+      // Crear una clave única combinando nombre_base_de_datos + descripcion_del_dato
+      const uniqueKey = `${nombreBase}|||${descripcion}`;
+      
+      // Verificar si ya existe esta combinación
+      if (!uniqueEntries.has(uniqueKey)) {
+        // Si no existe, agregar al conjunto consolidado
+        uniqueEntries.add(uniqueKey);
+        consolidatedData.push({
+          ...record,
+          source_file: fileName // Opcional: agregar el archivo de origen
+        });
+      } else {
+        console.log(`  Duplicado encontrado: ${record.nombre_base_de_datos} - ${record.descripcion_del_dato}`);
+      }
+    }
   }
+  
+  console.log(`\nConsolidación completa:`);
+  console.log(`   Total de registros únicos: ${consolidatedData.length}`);
+  console.log(`   Duplicados eliminados: ${
+    data.reduce((sum, file) => sum + file.dataExtracted.length, 0) - consolidatedData.length
+  }`);
+  
+  return consolidatedData;
+}
+  async getRows() {
+  // Verificamos si tiene archivos:
+  const haveFiles = await this.haveFiles(INPUT_DIR);
+
+  if (!haveFiles) {
+    console.log("No hay archivos en el directorio input");
+    return [];
+  }
+
+  // Si tiene archivos entonces vamos a proceder a extraer su composición:
+  const dataReaded = await this.readFilesXLSX();
+  
+  // Consolidar y limpiar los datos
+  const consolidatedData = await this.transformData(dataReaded);
+
+  return consolidatedData;
+}
 }
