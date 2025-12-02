@@ -18,7 +18,8 @@ export class transformToStructureADN {
 //Dejame evaluar inconsistencias
 const splitted = dato.propietario_origen.split(" ")
 if(splitted.length > 1){
-    console.log("Posiblemente deba corregir esto:")
+    console.log("Posiblemente deba corregir esto::")
+
     console.log(splitted)
     console.log(` en ${dato.source_file}`)
 
