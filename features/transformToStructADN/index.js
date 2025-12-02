@@ -1,65 +1,98 @@
+
+import { PropietarioOrigenClass } from "./classes/propietario_origenClass.js";
 export class transformToStructureADN {
-  constructor() {}
 
 
-  async propietario_origen_method(propietarioTexto){
-        //Voy a hacer 
-       // console.log(propietarioTexto)
-  }
+
 
   async transform(data) {
+    const propietarioOrigenHandler = new PropietarioOrigenClass;
 
+
+    const resultados = [];
+    const errores = [];
 
     for (let i = 0; i < data.length; i++) {
       const dato = data[i];
-//console.log(dato);
+      
+      try {
+        // Obtener información del propietario
+        const propietarioInfo = await propietarioOrigenHandler.propietario_origen_method(
+          dato.propietario_origen,
+          dato.source_file
+        );
 
+        console.log(propietarioInfo)
 
-//Dejame evaluar inconsistencias
-const splitted = dato.propietario_origen.split(" ")
-if(splitted.length > 1){
-    console.log("Posiblemente deba corregir esto::")
+        // GENERAR UN SQL NUEVO:
+        const nuevo = {
+          nombre_base_datos: dato.nombre_base_de_datos,
+          descripcion_dato: dato.descripcion_del_dato,
+          
+          // Información del propietario procesada
+          propietario_info: propietarioInfo,
+          id_propietario_origen: "...", // Aquí insertarías el ID después de buscar/crear en BD
+          
+          id_direccion_responsable: "...", // Aquí también vamos a hacer algo
+          id_empleado_responsable: "...", // Aquí vamos a hacer algo (Traer el director)
+          id_frecuencia_actualizacion: "...", // Aquí vamos a hacer algo también (Vamos a hacer una comparación)
+          
+          // Corrección del bug en es_publica
+          es_publica: 
+            dato.data_publica_privada.toLowerCase() === "publica" || 
+            dato.data_publica_privada.toLowerCase() === "pública",
+          
+          id_nivel_calidad_data: 3, // Aquí siempre la calidad de la data será baja
 
-    console.log(splitted)
-    console.log(` en ${dato.source_file}`)
+          enlace_link: dato.enlace_link,
+          id_formato_origen: "...", // Aquí vamos a hacer algo
+          id_formato_publicacion: "...", // Aquí vamos a hacer algo
+          id_tipo_datos: "...", // Aquí vamos a hacer algo
+          agregado_por: "SYSTEM 2",
+          estado: "activo",
+          
+          // Metadata adicional
+          source_file: dato.source_file,
+          row_number: dato.row_number
+        };
 
-  
-}else{
-      if(dato.propietario_origen === "??"){
-            console.log(dato)
+        resultados.push(nuevo);
+
+      } catch (error) {
+        // Capturar errores y continuar procesando para ver todos los problemas
+        errores.push({
+          indice: i,
+          dato: dato,
+          error: error.message
+        });
+        
+        console.error(`  Error en registro ${i + 1}:`, error.message);
       }
-console.log(`Propietario: ${dato.propietario_origen} en ${dato.source_file}`)
-
-if(dato.nombre_base_datos =="Reporte de Denuncias Ambientales"){
-    console.log(dato)
-}
-}
-  console.log("============Voy a ver todos los datos==========")
-  console.log(dato)
-
-      const nuevo = {
-        nombre_base_datos: dato.nombre_base_de_datos,
-        descripcion_dato:dato.descripcion_del_dato,
-        id_propietario_origen: await this.propietario_origen_method(dato.propietario_origen) , //AQUI VAMOS A HACER ALGO
-        id_direccion_responsable: "...", //Aqui tambien vamos a hacer algo
-        id_empleado_responsable: "...", // Aqui vamos a hacer algo (Traer el director)
-        id_frecuencia_actualizacion: "...", //Aqui vamos a hacer algo también (Vamos a hacer una comparación)
-        es_publica: dato.data_publica_privada.toLowerCase()==="publica" || "pública"? true:false,
-        id_nivel_calidad_data: 3, //Aqui siempre la calidad de la data sera baja
-
-        enlace_link: dato.enlace_link,
-        id_formato_origen: "...", //Aqui vamos a hacer algo
-        id_formato_publicacion: "...", //Aqui vamos a hacer algo
-        id_tipo_datos: "...", //Aqui vamos a hacer algo
-        agregado_por: "SYSTEM 2",
-        estado: "activo",
-      };
-
-      //console.log(nuevo)
     }
 
-  
+    // Resumen final
+    console.log(`\n RESUMEN DE TRANSFORMACIÓN`);
+    console.log(`    Registros procesados exitosamente: ${resultados.length}`);
+    console.log(`    Registros con errores: ${errores.length}`);
+    
+    if (errores.length > 0) {
+      console.log(`\n  ERRORES ENCONTRADOS:`);
+      errores.forEach((err, idx) => {
+        console.log(`   ${idx + 1}. [Línea ${err.indice + 1}] ${err.error}`);
+      });
+      
+      // Si hay errores, puedes decidir si lanzar excepción o solo advertir
+      throw new Error(
+        `Se encontraron ${errores.length} propietarios no identificados. ` +
+        `Revisa los logs anteriores y agrega los faltantes a responsablesIdentificados.`
+      );
+    }
 
- 
+    return resultados;
   }
+
+
+
+
+
 }

@@ -45,7 +45,7 @@ export class excelHandler {
       'fuente'
     ];
 
-    console.log(`  🔍 Buscando cabeceras duplicadas...`);
+    console.log(`   Buscando cabeceras duplicadas...`);
 
     const filteredData = dataArray.filter((record, index) => {
       // Normalizar los valores del registro
@@ -78,7 +78,7 @@ export class excelHandler {
       const isHeaderDuplicate = hasHeaderKeywords || matchesOriginalHeader;
 
       if (isHeaderDuplicate) {
-        console.log(`     ⚠️  Cabecera duplicada detectada y eliminada en índice ${index}:`);
+        console.log(`       Cabecera duplicada detectada y eliminada en índice ${index}:`);
         console.log(`        Item: "${record.item}"`);
         console.log(`        Base: "${record.nombre_base_de_datos}"`);
         console.log(`        Descripción: "${record.descripcion_del_dato}"`);
@@ -93,141 +93,142 @@ export class excelHandler {
   }
 
   async readFilesXLSX() {
-    const allUnits = []; //Vamos a guardar todo el bundle
+  const allUnits = [];
 
-    try {
-      const files = fs.readdirSync(INPUT_DIR);
-      const ExcelFiles = files.filter(
-        (file) =>
-          file.toLowerCase().endsWith(".xlsx") ||
-          file.toLowerCase().endsWith(".xls")
-      );
+  try {
+    const files = fs.readdirSync(INPUT_DIR);
+    const ExcelFiles = files.filter(
+      (file) =>
+        file.toLowerCase().endsWith(".xlsx") ||
+        file.toLowerCase().endsWith(".xls")
+    );
 
-      if (ExcelFiles.length === 0) {
-        console.log("No se encontraron archivos Excel en el directorio input");
-        return [];
-      }
+    if (ExcelFiles.length === 0) {
+      console.log("No se encontraron archivos Excel en el directorio input");
+      return [];
+    }
 
-      const dataExtratedFromFiles = [];
+    const dataExtratedFromFiles = [];
+    
+    for (let fileIndex = 0; fileIndex < ExcelFiles.length; fileIndex++) {
+      const file = ExcelFiles[fileIndex];
       
-      //Por cada archivo de Excel realizar:
-      for (let fileIndex = 0; fileIndex < ExcelFiles.length; fileIndex++) {
-        const file = ExcelFiles[fileIndex];
+      console.log(`\n Procesando: ${file}`); //  Log para verificar
 
-        try {
-          const filePath = path.join(INPUT_DIR, file);
-          const fileBuffer = fs.readFileSync(filePath);
-          const workbook = XLSX.read(fileBuffer, { type: "buffer" });
+      try {
+        const filePath = path.join(INPUT_DIR, file);
+        const fileBuffer = fs.readFileSync(filePath);
+        const workbook = XLSX.read(fileBuffer, { type: "buffer" });
 
-          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-            console.log(`  El archivo no contiene hojas`);
-            continue;
-          }
-
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const arrayRows = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            defval: "",
-            raw: false,
-          });
-
-          let headerRowIndex = -1;
-
-          // Buscar la fila de encabezados
-          for (let i = 0; i < Math.min(20, arrayRows.length); i++) {
-            const row = arrayRows[i];
-            if (Array.isArray(row)) {
-              const rowStr = row.join("").toLowerCase();
-              if (
-                rowStr.toLowerCase().includes("item") ||
-                rowStr.toLowerCase().includes("nombre de la base") ||
-                rowStr.toLowerCase().includes("propietario / origen") ||
-                rowStr.toLowerCase().includes("direccion responsable")
-              ) {
-                headerRowIndex = i;
-                console.log(`  Encabezados encontrados en fila ${i}`);
-                break;
-              }
-            }
-          }
-
-          if (headerRowIndex === -1) {
-            console.log(
-              `  No se encontraron encabezados, asumiendo estructura estándar`
-            );
-            headerRowIndex = 0;
-          }
-
-          let processedCount = 0;
-          let duplicateHeaderCount = 0;
-
-          const dataFromOneFile = [];
-          const encabezado = arrayRows[headerRowIndex];
-          
-          // Procesar desde la siguiente fila después de los encabezados
-          for (let i = headerRowIndex + 1; i < arrayRows.length; i++) {
-            const row = arrayRows[i];
-            if (!Array.isArray(row) || row.length < 2) continue;
-
-            // Solo armar el body siempre y cuando ciertas posiciones estén llenas
-            if (
-              row[0].trim().length > 0 && 
-              row[1].trim().length > 0 && // Nombre de la base de datos
-              row[2].trim().length > 0 && // Descripcion del dato
-              row[4].trim().length > 0    // Direccion responsable
-            ) {
-              const body = {
-                item: row[0].trim(),
-                nombre_base_de_datos: row[1].trim(),
-                descripcion_del_dato: row[2].trim(),
-                propietario_origen: row[3].trim(),
-                direccion_responsable: row[4].trim(),
-                contacto_responsable: row[5].trim(),
-                frecuencia_actualizacion: row[6].trim(),
-                data_publica_privada: row[7].trim(),
-                nivel_calidad_data: row[8].trim(),
-                fuente_ie: row[9].trim(),
-                actualizado_fecha: row[10].trim(),
-                enlace_link: row[11].trim(),
-                formato_origen: row[12].trim(),
-                formato_publicacion: row[13].trim(),
-                tipo_datos: row[14].trim(),
-              };
-
-              dataFromOneFile.push(body);
-              processedCount++;
-            }
-          }
-
-          // FILTRADO POST-PROCESAMIENTO: Eliminar cabeceras duplicadas
-          const cleanedData = this.removeHeaderDuplicates(dataFromOneFile, encabezado);
-          const removedCount = dataFromOneFile.length - cleanedData.length;
-
-          console.log(`  ✓ Procesadas ${processedCount} filas`);
-          if (removedCount > 0) {
-            console.log(`  ✓ Eliminadas ${removedCount} cabeceras duplicadas`);
-          }
-          console.log(`  ✓ Filas válidas finales: ${cleanedData.length}`);
-
-          dataExtratedFromFiles.push({
-            fileName: ExcelFiles[fileIndex],
-            dataExtracted: cleanedData
-          });
-
-        } catch (fileError) {
-          console.error(`Error procesando archivo ${file}:`);
-          console.error(`   Mensaje: ${fileError.message}`);
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          console.log(`  El archivo no contiene hojas`);
           continue;
         }
+
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const arrayRows = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          defval: "",
+          raw: false,
+        });
+
+        let headerRowIndex = -1;
+
+        // Buscar la fila de encabezados
+        for (let i = 0; i < Math.min(20, arrayRows.length); i++) {
+          const row = arrayRows[i];
+          if (Array.isArray(row)) {
+            const rowStr = row.join("").toLowerCase();
+            if (
+              rowStr.toLowerCase().includes("item") ||
+              rowStr.toLowerCase().includes("nombre de la base") ||
+              rowStr.toLowerCase().includes("propietario / origen") ||
+              rowStr.toLowerCase().includes("direccion responsable")
+            ) {
+              headerRowIndex = i;
+              console.log(`  Encabezados encontrados en fila ${i}`);
+              break;
+            }
+          }
+        }
+
+        if (headerRowIndex === -1) {
+          console.log(
+            `  No se encontraron encabezados, asumiendo estructura estándar`
+          );
+          headerRowIndex = 0;
+        }
+
+        let processedCount = 0;
+        const dataFromOneFile = [];
+        const encabezado = arrayRows[headerRowIndex];
+        
+        //  Procesar desde la siguiente fila después de los encabezados
+        for (let i = headerRowIndex + 1; i < arrayRows.length; i++) {
+          const row = arrayRows[i];
+          if (!Array.isArray(row) || row.length < 2) continue;
+
+          // Solo armar el body siempre y cuando ciertas posiciones estén llenas
+          if (
+            row[0].trim().length > 0 && 
+            row[1].trim().length > 0 && 
+            row[2].trim().length > 0 && 
+            row[4].trim().length > 0
+          ) {
+            const body = {
+              item: row[0].trim(),
+              nombre_base_de_datos: row[1].trim(),
+              descripcion_del_dato: row[2].trim(),
+              propietario_origen: row[3].trim(),
+              direccion_responsable: row[4].trim(),
+              contacto_responsable: row[5].trim(),
+              frecuencia_actualizacion: row[6].trim(),
+              data_publica_privada: row[7].trim(),
+              nivel_calidad_data: row[8].trim(),
+              fuente_ie: row[9].trim(),
+              actualizado_fecha: row[10].trim(),
+              enlace_link: row[11].trim(),
+              formato_origen: row[12].trim(),
+              formato_publicacion: row[13].trim(),
+              tipo_datos: row[14].trim(),
+              source_file: file, //  ASIGNAR AQUÍ EL ARCHIVO ORIGEN
+              row_number: i + 1  //  OPCIONAL: número de fila para debugging
+            };
+
+            dataFromOneFile.push(body);
+            processedCount++;
+          }
+        }
+
+        // FILTRADO POST-PROCESAMIENTO: Eliminar cabeceras duplicadas
+        const cleanedData = this.removeHeaderDuplicates(dataFromOneFile, encabezado);
+        const removedCount = dataFromOneFile.length - cleanedData.length;
+
+        console.log(`  ✓ Procesadas ${processedCount} filas`);
+        if (removedCount > 0) {
+          console.log(`  ✓ Eliminadas ${removedCount} cabeceras duplicadas`);
+        }
+        console.log(`  ✓ Filas válidas finales: ${cleanedData.length}`);
+
+        dataExtratedFromFiles.push({
+          fileName: file, //  Usar 'file' directamente
+          dataExtracted: cleanedData
+        });
+
+      } catch (fileError) {
+        console.error(`Error procesando archivo ${file}:`);
+        console.error(`   Mensaje: ${fileError.message}`);
+        continue;
       }
-
-      return dataExtratedFromFiles;
-
-    } catch (error) {
-      console.log(error);
     }
+
+    return dataExtratedFromFiles;
+
+  } catch (error) {
+    console.log(error);
   }
+}
 
   async transformData(data) {
     // Arreglo consolidado sin duplicados
