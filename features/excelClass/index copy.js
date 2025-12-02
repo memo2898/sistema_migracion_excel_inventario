@@ -21,77 +21,6 @@ export class excelHandler {
     }
   }
 
-  // Método para limpiar cabeceras duplicadas después del procesamiento
-  removeHeaderDuplicates(dataArray, headerRow) {
-    const normalizeText = (text) => {
-      if (!text) return '';
-      return text.toString().trim().toLowerCase().replace(/\s+/g, ' ');
-    };
-
-    // Palabras clave que indican que es una cabecera
-    const headerKeywords = [
-      'item',
-      'nombre de la base',
-      'descripcion del dato',
-      'propietario',
-      'origen',
-      'direccion responsable',
-      'contacto',
-      'frecuencia',
-      'actualizacion',
-      'publica',
-      'privada',
-      'calidad',
-      'fuente'
-    ];
-
-    console.log(`  🔍 Buscando cabeceras duplicadas...`);
-
-    const filteredData = dataArray.filter((record, index) => {
-      // Normalizar los valores del registro
-      const item = normalizeText(record.item);
-      const nombreBase = normalizeText(record.nombre_base_de_datos);
-      const descripcion = normalizeText(record.descripcion_del_dato);
-      const propietario = normalizeText(record.propietario_origen);
-
-      // Verificar si alguno de los campos contiene palabras clave de cabecera
-      const hasHeaderKeywords = 
-        headerKeywords.some(keyword => item.includes(keyword)) ||
-        headerKeywords.some(keyword => nombreBase.includes(keyword)) ||
-        headerKeywords.some(keyword => descripcion.includes(keyword)) ||
-        headerKeywords.some(keyword => propietario.includes(keyword));
-
-      // También verificar coincidencias directas con la cabecera original
-      const normalizedHeaders = {
-        item: normalizeText(headerRow[0]),
-        nombre_base_de_datos: normalizeText(headerRow[1]),
-        descripcion_del_dato: normalizeText(headerRow[2]),
-        propietario_origen: normalizeText(headerRow[3]),
-      };
-
-      const matchesOriginalHeader = 
-        item === normalizedHeaders.item ||
-        nombreBase === normalizedHeaders.nombre_base_de_datos ||
-        descripcion === normalizedHeaders.descripcion_del_dato ||
-        propietario === normalizedHeaders.propietario_origen;
-
-      const isHeaderDuplicate = hasHeaderKeywords || matchesOriginalHeader;
-
-      if (isHeaderDuplicate) {
-        console.log(`     ⚠️  Cabecera duplicada detectada y eliminada en índice ${index}:`);
-        console.log(`        Item: "${record.item}"`);
-        console.log(`        Base: "${record.nombre_base_de_datos}"`);
-        console.log(`        Descripción: "${record.descripcion_del_dato}"`);
-        console.log(`        Propietario: "${record.propietario_origen}"`);
-        return false; // Excluir este registro
-      }
-
-      return true; // Mantener este registro
-    });
-
-    return filteredData;
-  }
-
   async readFilesXLSX() {
     const allUnits = []; //Vamos a guardar todo el bundle
 
@@ -165,10 +94,47 @@ export class excelHandler {
           const dataFromOneFile = [];
           const encabezado = arrayRows[headerRowIndex];
           
+          // Normalizar función para comparación
+          const normalizeText = (text) => {
+            if (!text) return '';
+            return text.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+          };
+          
+          // Debug: mostrar cabecera detectada
+          console.log(`\n  📋 Cabecera detectada:`);
+          console.log(`     [0]: "${encabezado[0]}" -> normalizado: "${normalizeText(encabezado[0])}"`);
+          console.log(`     [1]: "${encabezado[1]}" -> normalizado: "${normalizeText(encabezado[1])}"`);
+          console.log(`     [2]: "${encabezado[2]}" -> normalizado: "${normalizeText(encabezado[2])}"`);
+          console.log(`     [3]: "${encabezado[3]}" -> normalizado: "${normalizeText(encabezado[3])}"`);
+          
           // Procesar desde la siguiente fila después de los encabezados
           for (let i = headerRowIndex + 1; i < arrayRows.length; i++) {
             const row = arrayRows[i];
             if (!Array.isArray(row) || row.length < 2) continue;
+
+            // Verificar si es una fila de cabecera duplicada con comparación normalizada
+            const match0 = normalizeText(row[0]) === normalizeText(encabezado[0]);
+            const match1 = normalizeText(row[1]) === normalizeText(encabezado[1]);
+            const match2 = normalizeText(row[2]) === normalizeText(encabezado[2]);
+            const match3 = normalizeText(row[3]) === normalizeText(encabezado[3]);
+            
+            const isDuplicateHeader = match0 && match1 && match2 && match3;
+
+            // Debug detallado cuando hay coincidencias parciales
+            if (match0 && match1) {
+              console.log(`\n  🔍 Posible cabecera en fila ${i + 1}:`);
+              console.log(`     [0] "${row[0]}" vs "${encabezado[0]}" -> ${match0 ? '✓' : '✗'}`);
+              console.log(`     [1] "${row[1]}" vs "${encabezado[1]}" -> ${match1 ? '✓' : '✗'}`);
+              console.log(`     [2] "${row[2]}" vs "${encabezado[2]}" -> ${match2 ? '✓' : '✗'}`);
+              console.log(`     [3] "${row[3]}" vs "${encabezado[3]}" -> ${match3 ? '✓' : '✗'}`);
+              console.log(`     Es duplicado: ${isDuplicateHeader}`);
+            }
+
+            if (isDuplicateHeader) {
+              duplicateHeaderCount++;
+              console.log(`  ⚠️  Cabecera duplicada ignorada en fila ${i + 1}`);
+              continue; // Saltar esta fila
+            }
 
             // Solo armar el body siempre y cuando ciertas posiciones estén llenas
             if (
@@ -200,19 +166,14 @@ export class excelHandler {
             }
           }
 
-          // FILTRADO POST-PROCESAMIENTO: Eliminar cabeceras duplicadas
-          const cleanedData = this.removeHeaderDuplicates(dataFromOneFile, encabezado);
-          const removedCount = dataFromOneFile.length - cleanedData.length;
-
-          console.log(`  ✓ Procesadas ${processedCount} filas`);
-          if (removedCount > 0) {
-            console.log(`  ✓ Eliminadas ${removedCount} cabeceras duplicadas`);
+          console.log(`  ✓ Procesadas ${processedCount} filas válidas`);
+          if (duplicateHeaderCount > 0) {
+            console.log(`  ✓ Ignoradas ${duplicateHeaderCount} cabeceras duplicadas`);
           }
-          console.log(`  ✓ Filas válidas finales: ${cleanedData.length}`);
 
           dataExtratedFromFiles.push({
             fileName: ExcelFiles[fileIndex],
-            dataExtracted: cleanedData
+            dataExtracted: dataFromOneFile
           });
 
         } catch (fileError) {
