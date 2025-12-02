@@ -1,0 +1,66 @@
+-- ==========================INVENTARIO DE DATOS DIRECCION DE TI START =================:
+INSERT INTO public.datasets(
+    -- 1  nombre_base_datos
+	nombre_base_datos, 
+    -- 2  descripcion_dato
+    descripcion_dato, 
+    -- 3  id_propietario_origen
+    id_propietario_origen, 
+    -- 4  id_direccion_responsable
+    id_direccion_responsable, 
+    -- 5  id_empleado_responsable
+    id_empleado_responsable, 
+    -- 6  id_frecuencia_actualizacion
+    id_frecuencia_actualizacion, 
+    -- 7  es_publica
+    es_publica, 
+    -- 8  id_nivel_calidad_data
+    id_nivel_calidad_data, 
+    -- 9  enlace_link
+    enlace_link, 
+    -- 10 id_formato_origen
+    id_formato_origen,
+    -- 11 id_formato_publicacion   
+    id_formato_publicacion,
+    -- 12 id_tipo_datos
+    id_tipo_datos, 
+    -- 13 agregado_por
+    agregado_por, 
+    -- 14 agregado_en
+    agregado_en, 
+    -- 17 estado
+    estado
+)
+VALUES (
+    -- 1  nombre_base_datos
+    'Padrón del Ciudadano ', 
+    -- 2  descripcion_dato
+    'Listado de ciudadanos mayor de Edad Registrado en el DN.', 
+    -- 3  id_propietario_origen
+    413, -- Junta Central Electoral
+    -- 4  id_direccion_responsable
+    30, 
+    -- 5  id_empleado_responsable
+    15, 
+    -- 6  id_frecuencia_actualizacion
+    10, --Anual
+    -- 7  es_publica
+    true,  
+    -- 8 id_nivel_calidad_data
+    3,
+    -- 9 enlace_link
+    '', 
+    -- 10 id_formato_origen
+    1,
+    -- 11 id_formato_publicacion  
+    1,
+    -- 12 id_tipo_datos
+    1, --Sin restricciones
+    -- 13 agregado_por
+    'SCRIPT SQL ESCRITO A MANO', 
+    -- 14 agregado_en
+    NOW(),
+    -- 17 estado
+    'activo'
+);
+-- ==========================INVENTARIO DE DATOS DIRECCION DE TI END =================:

@@ -1,4 +1,7 @@
 
+import { DireccionClass } from "./classes/direccionClass.js";
+import { FormatosClass } from "./classes/formatosClass.js";
+import { FrecuenciaClass } from "./classes/frecuenciaClass.js";
 import { PropietarioOrigenClass } from "./classes/propietario_origenClass.js";
 export class transformToStructureADN {
 
@@ -7,7 +10,9 @@ export class transformToStructureADN {
 
   async transform(data) {
     const propietarioOrigenHandler = new PropietarioOrigenClass;
-
+    const direccionResponsableHandler = new DireccionClass
+    const frecuenciaHandler = new FrecuenciaClass
+    const formatosHandler = new FormatosClass
 
     const resultados = [];
     const errores = [];
@@ -21,9 +26,23 @@ export class transformToStructureADN {
           dato.propietario_origen,
           dato.source_file
         );
+        const direccion_responsable = await direccionResponsableHandler.direccion_responsable_method(
+          dato.direccion_responsable,
+          dato.source_file
+        )
+       
+        const frecuencia_actualizacion = await frecuenciaHandler.frecuenciaMethod(
+           dato.frecuencia_actualizacion,
+          dato.source_file
+        )
 
-        console.log(propietarioInfo)
+        const formatoPublicacion = await formatosHandler.formatoMethod(
+          dato.formato_origen,
+          dato.source_file
+        )
+        
 
+         
         // GENERAR UN SQL NUEVO:
         const nuevo = {
           nombre_base_datos: dato.nombre_base_de_datos,
@@ -31,11 +50,11 @@ export class transformToStructureADN {
           
           // Información del propietario procesada
           propietario_info: propietarioInfo,
-          id_propietario_origen: "...", // Aquí insertarías el ID después de buscar/crear en BD
+
           
-          id_direccion_responsable: "...", // Aquí también vamos a hacer algo
-          id_empleado_responsable: "...", // Aquí vamos a hacer algo (Traer el director)
-          id_frecuencia_actualizacion: "...", // Aquí vamos a hacer algo también (Vamos a hacer una comparación)
+          direccion_responsable:direccion_responsable, // Aquí también vamos a hacer algo
+          empleado_responsable: "SE DEBE SELECCIONAR AL DIRECTOR", // Aquí vamos a hacer algo (Traer el director)
+          frecuencia_actualizacion: frecuencia_actualizacion, // Aquí vamos a hacer algo también (Vamos a hacer una comparación)
           
           // Corrección del bug en es_publica
           es_publica: 
@@ -45,9 +64,9 @@ export class transformToStructureADN {
           id_nivel_calidad_data: 3, // Aquí siempre la calidad de la data será baja
 
           enlace_link: dato.enlace_link,
-          id_formato_origen: "...", // Aquí vamos a hacer algo
-          id_formato_publicacion: "...", // Aquí vamos a hacer algo
-          id_tipo_datos: "...", // Aquí vamos a hacer algo
+          id_formato_origen: formatoPublicacion, // Aquí vamos a hacer algo
+          id_formato_publicacion: formatoPublicacion, // Aquí vamos a hacer algo
+          id_tipo_datos: 1, // Aquí vamos a hacer algo
           agregado_por: "SYSTEM 2",
           estado: "activo",
           
